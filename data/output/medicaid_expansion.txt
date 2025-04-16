@@ -1,0 +1,52 @@
+State	expanded	date_adopted
+Alabama	FALSE	NA
+Alaska	FALSE	2015-09-01
+Arizona	FALSE	2014-01-01
+Arkansas	FALSE	2014-01-01
+California	FALSE	2014-01-01
+Colorado	FALSE	2014-01-01
+Connecticut	FALSE	2014-01-01
+Delaware	FALSE	2014-01-01
+District of Columbia	FALSE	2014-01-01
+Florida	FALSE	NA
+Georgia	FALSE	NA
+Hawaii	FALSE	2014-01-01
+Idaho	FALSE	2020-01-01
+Illinois	FALSE	2014-01-01
+Indiana	FALSE	2015-02-01
+Iowa	FALSE	2014-01-01
+Kansas	FALSE	NA
+Kentucky	FALSE	2014-01-01
+Louisiana	FALSE	2016-07-01
+Maine	FALSE	2019-01-10
+Maryland	FALSE	2014-01-01
+Massachusetts	FALSE	2014-01-01
+Michigan	FALSE	2014-04-01
+Minnesota	FALSE	2014-01-01
+Mississippi	FALSE	NA
+Missouri	FALSE	2021-10-01
+Montana	FALSE	2016-01-01
+Nebraska	FALSE	2020-10-01
+Nevada	FALSE	2014-01-01
+New Hampshire	FALSE	2014-08-15
+New Jersey	FALSE	2014-01-01
+New Mexico	FALSE	2014-01-01
+New York	FALSE	2014-01-01
+North Carolina	FALSE	2023-12-01
+North Dakota	FALSE	2014-01-01
+Ohio	FALSE	2014-01-01
+Oklahoma	FALSE	2021-07-01
+Oregon	FALSE	2014-01-01
+Pennsylvania	FALSE	2015-01-01
+Rhode Island	FALSE	2014-01-01
+South Carolina	FALSE	NA
+South Dakota	FALSE	2023-07-01
+Tennessee	FALSE	NA
+Texas	FALSE	NA
+Utah	FALSE	2020-01-01
+Vermont	FALSE	2014-01-01
+Virginia	FALSE	2019-01-01
+Washington	FALSE	2014-01-01
+West Virginia	FALSE	2014-01-01
+Wisconsin	FALSE	NA
+Wyoming	FALSE	NA
