@@ -39,7 +39,7 @@ get.insurance.data <- function(year) {
 
 # run for all years 
 years <- 2012:2019 
-insurance.data <- map_dfr(years, get_insurance_data) 
+insurance.data <- map_dfr(years, get.insurance.data) 
 
 # tidy the data 
 final.insurance <- insurance.data %>%

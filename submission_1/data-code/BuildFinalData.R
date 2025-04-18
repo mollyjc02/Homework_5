@@ -3,6 +3,7 @@ if (!require("pacman")) install.packages("pacman")
 pacman::p_load(tidyverse, ggplot2, dplyr, lubridate, readr, readxl, scales, acs, tidyr)
 
 source('data-code/Medicaid.R')
+source('data-code/API_key.R')
 source('data-code/ACS.R')
 
 
