@@ -5,14 +5,12 @@ kff.data <- read_csv('data/input/KFF_medicaid_expansion.csv')
 
 # clean KFF data 
 kff.final <- kff.data %>%
-  mutate(expanded = (`Expansion Status` == 'Adopted and Implemented'),
-         Description = str_replace_all(Description,c("\n"='','"'='')))
-
-kff.final$splitvar <- kff.final %>% select(Description) %>% as.data.frame() %>%
-  separate(Description, sep=" ", into=c(NA, NA, NA, "date"))
-
-kff.final <- kff.final %>%
-  mutate(date_adopted = mdy(splitvar$date)) %>%
+  mutate(
+    expanded = (`Expansion Status` == 'Adopted and Implemented'),
+    Description = str_replace_all(Description, c("\n" = "", '"' = "")),
+    first_date_str = str_extract(Description, "\\d{1,2}/\\d{1,2}/\\d{4}"),
+    date_adopted = mdy(first_date_str)
+  ) %>%
   select(State, expanded, date_adopted)
 
 write_tsv(kff.final,'data/output/medicaid_expansion.txt')
