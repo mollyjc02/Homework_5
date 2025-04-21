@@ -1,0 +1,191 @@
+---
+title: "Homework 5"
+subtitle: "ECON 470, Spring 2025"
+author: "Molly Catlin"
+format:
+  pdf:
+    output-file: "catlin_molly_hwk4_s1"
+    output-ext:  "pdf"
+    header-includes:
+      - \usepackage{float}
+      - \floatplacement{table}{H}
+---
+
+```{r}
+#| include: false
+
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(tidyverse, ggplot2, dplyr, lubridate, readr, readxl, hrbrthemes, fixest,
+               scales, gganimate, gapminder, gifski, png, tufte, plotly, OECD,
+               ggrepel, survey, foreign, devtools, pdftools, kableExtra, modelsummary,
+               kableExtra) 
+library(patchwork)
+library(gridExtra)
+```
+
+Here is a link to my repository: {https://github.com/mollyjc02/Homework_5.git}
+
+\newpage 
+```{r}
+#| include: false
+#| eval: true
+
+library(here)
+load(here("submission_1", "results", "hwk5_workspace.RData"))
+```
+
+
+\newpage 
+
+
+## 1. Plot the share of the adult population with direct purchase health insurance over time. 
+ 
+
+```{r} 
+#| echo: false
+#| label: fig-dir-share
+
+print(direct.share.plt)
+```
+
+
+\newpage 
+
+
+## 2. Discuss the reduction in direct purchase health insurance in later years. Can you list a couple of policies that might have affected the success of the direct purchase insurance market? 
+answer here 
+
+
+\newpage 
+
+
+# 3. Plot the share of the adult population with Medicaid over time. 
+
+
+```{r} 
+#| echo: false
+#| label: fig-med-share
+
+print(medicaid.share.plt)
+```
+
+
+\newpage 
+
+
+# 4. Plot the share of uninsured over time, separately by states that expanded Medicaid in 2014 versus those that did not. Drop all states that expanded after 2014. 
+
+
+```{r} 
+#| echo: false
+#| label: fig-unisured
+
+print(uninsured.plot)
+```
+
+
+\newpage 
+
+
+# 5. Calculate the average percent of uninsured individuals in 2012 and 2015, separately for expansion and non-expansion states. Present your results in a basic 2x2 DD table. 
+
+
+```{r} 
+#| echo: false
+#| label: tab-dd
+#| results: asis
+
+knitr::kable(dd.table, digits = 3, caption = "Difference-in-Differences Table of Uninsured Rates")
+```
+
+
+\newpage 
+
+
+# 6. Estimate the effect of Medicaid expansion on the uninsurance rate using a standard DD regression estimator, again focusing only on states that expanded in 2014 versus those that never expanded. 
+
+
+```{r} 
+#| echo: false
+#| label: tab-dd-reg
+#| results: asis
+
+library(broom)
+
+tidy(dd.model, conf.int = TRUE) %>%
+  mutate(across(c(estimate, std.error, conf.low, conf.high), ~ round(., 4))) %>%
+  knitr::kable(
+    caption = "Difference-in-Differences Regression: Effect of Medicaid Expansion on Uninsurance Rate",
+    col.names = c("Term", "Estimate", "Std. Error", "t value", "p value", "95% CI (Low)", "95% CI (High)")
+  )
+```
+
+
+\newpage 
+
+
+# 7. Include state and year fixed effects in your estimates. Try using the lfe or fixest package to estimate this instead of directly including the fixed effects. 
+
+
+```{r} 
+#| echo: false
+#| label: tab-dd-fe
+#| results: asis
+
+knitr::kable(
+  fe.model.tidy %>%
+    mutate(across(c(estimate, std.error, conf.low, conf.high), ~ round(., 4))),
+  caption = "Two-Way Fixed Effects DiD Regression Results",
+  col.names = c("Term", "Estimate", "Std. Error", "t value", "p value", "95% CI (Low)", "95% CI (High)")
+)
+```
+
+
+\newpage 
+
+
+# 8. Repeat the analysis in question 7 but include all states (even those that expanded after 2014). Are your results different? If so, why? 
+
+
+```{r} 
+#| echo: false
+#| label: tab-dd-fe-all
+#| results: asis
+
+knitr::kable(
+  fe.model.all.tidy %>%
+    mutate(across(c(estimate, std.error, conf.low, conf.high), \(x) round(x, 4))),
+  caption = "DiD Regression with State and Year Fixed Effects (All States Included)",
+  col.names = c("Term", "Estimate", "Std. Error", "t value", "p value", "95% CI (Low)", "95% CI (High)")
+)
+```
+
+
+\newpage 
+
+
+# 9. Provide an “event study” graph showing the effects of Medicaid expansion in each year. Use the specification that includes state and year fixed effects, limited to states that expanded in 2014 or never expanded. 
+
+
+```{r} 
+#| echo: false
+#| label: fig-event-study-14
+#| fig-cap: "Event Study: Effect of Medicaid Expansion on Uninsurance Rate (2014 Expanders vs. Non-Expanders)"
+
+print(event.study14)
+```
+
+
+\newpage 
+
+
+# 10.Repeat part 9 but again include states that expanded after 2014. Note: this is tricky…you need to put all states onto “event time” to create this graph. 
+
+
+```{r} 
+#| echo: false
+#| label: fig-event-study-all
+#| fig-cap: "Event Study: Effect of Medicaid Expansion on Uninsurance Rate (All Expanders vs. Non-Expanders)"
+
+print(event.study.all)
+```
