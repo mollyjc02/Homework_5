@@ -160,8 +160,8 @@ summary(dd.model)
 
 # 7. Include state and year fixed effects in your estimates. 
 library(fixest) 
+library(broom)
 
-### make sure 'State' and 'year' are in data 
 fe.model <- feols(perc_unins ~ treat | State + year, data = reg.data)
 fe.model.tidy <- tidy(fe.model, conf.int = TRUE)
 summary(fe.model.tidy)
@@ -194,21 +194,14 @@ event.data <- final.data.exp %>%
   )
 
 ### estimate model  
-fixest::setFixest_save_data(TRUE)
 event.model <- feols(
   uninsured_rate ~ i(year, expansion, ref = "2013") | State + year,
   cluster = ~State,
   data = event.data
 )
 
-### plot the data 
-event.plot <- tidy(event.model, conf.int = TRUE) %>%
-  filter(str_detect(term, "year::")) %>%
-  mutate(
-    year = as.numeric(str_extract(term, "\\d+"))
-  )
-
-event.study14 <- iplot(event.model,
+### plot 
+iplot(event.model,
       xlab = "Year",
       main = "Event Study: Effect of Medicaid Expansion (2014 only)")
 
@@ -228,14 +221,13 @@ event.data.all <- event.data.all %>%
   mutate(event_time = factor(event_time))
 
 ### estimate model
-fixest::setFixest_save_data(TRUE)
 event.model.all <- feols(
   uninsured_rate ~ i(event_time, ref = "-1") | State + year,
   data = event.data.all
 )
 
 ### extract and plot 
-event.study.all <- iplot(
+iplot(
   event.model.all,
   xlab = "Event Time (Years Since Expansion)",
   main = "Event Study: Medicaid Expansion (All States with Event Time)",
@@ -245,5 +237,5 @@ event.study.all <- iplot(
 
 
 
-rm(list = setdiff(ls(), c("direct.share.plt", "medicaid.share.plt", "uninsured.plot", "dd.table", "dd.model", "fe.model.tidy", "fe.model.all.tidy", "event.study14", "event.model", "event.study.all", "event.model.all")))
-save.image("submission_1/results/hwk5_workspace.RData") 
+###rm(list = setdiff(ls(), c("direct.share.plt", "medicaid.share.plt", "uninsured.plot", "dd.table", "dd.model", "fe.model.tidy", "fe.model.all.tidy", "event.study14", "event.model", "event.study.all", "event.model.all")))
+###save.image("submission_2/results/hwk5_workspace.RData") 

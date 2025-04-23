@@ -4,7 +4,7 @@ subtitle: "ECON 470, Spring 2025"
 author: "Molly Catlin"
 format:
   pdf:
-    output-file: "catlin_molly_hwk4_s1"
+    output-file: "catlin_molly_hwk5_s2"
     output-ext:  "pdf"
     header-includes:
       - \usepackage{float}
@@ -31,7 +31,7 @@ Here is a link to my repository: {https://github.com/mollyjc02/Homework_5.git}
 #| eval: true
 
 library(here)
-load(here("submission_1", "results", "hwk5_workspace.RData"))
+load(here("submission_2", "results", "hwk5_workspace.RData"))
 ```
 
 
