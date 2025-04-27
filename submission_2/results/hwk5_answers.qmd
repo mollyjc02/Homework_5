@@ -9,24 +9,23 @@ format:
     header-includes:
       - \usepackage{float}
       - \floatplacement{table}{H}
+    df-print: kable
 ---
 
 ```{r}
 #| include: false
 
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load(tidyverse, ggplot2, dplyr, lubridate, readr, readxl, hrbrthemes, fixest,
-               scales, gganimate, gapminder, gifski, png, tufte, plotly, OECD,
-               ggrepel, survey, foreign, devtools, pdftools, kableExtra, modelsummary)
-
-library(patchwork)
-library(gridExtra)
-options(modelsummary_factory_default = "kableExtra")
+pacman::p_load(tidyverse, ggplot2, dplyr, lubridate, stringr, readxl, 
+               data.table, gdata, scales, kableExtra, modelsummary, fixest)
 ```
 
 Here is a link to my repository: {https://github.com/mollyjc02/Homework_5.git}
 
+
 \newpage 
+
+
 ```{r}
 #| include: false
 #| eval: true
@@ -99,122 +98,23 @@ uninsured.plot
 #| label: tab-dd
 #| tbl-cap: "DD Table for Medicaid Expansion"
 
-knitr::kable(dd.table, 
-             col.names=c("Group", "Pre", "Post"),
-             digits=2,
-             booktabs = TRUE,
-             escape=F,
-             align="l",
-             format='latex') %>% 
-  kable_styling(full_width=F)
+knitr::kable(dd.table, digits = 3, caption = "Difference-in-Differences Table of Uninsured Rates")
 ```
 
 
-\newpage 
+\newpage
 
 
-# 6. Estimate the effect of Medicaid expansion on the uninsurance rate using a standard DD regression estimator, again focusing only on states that expanded in 2014 versus those that never expanded. 
+# 6. Estimate the effect of Medicaid expansion on the uninsurance rate using a standard DD regression estimator, again focusing only on states that expanded in 2014 versus those that never expanded.
 
 
-```{r} 
+```{r}
 #| echo: false
 #| label: tab-dd-reg
 #| tbl-cap: "DD Estimates for Medicaid Expansion"
-dd.est <- lm(perc_unins ~ post + expand_ever + treat, data = reg.data)
 
 modelsummary(dd.est,
              coef_rename=c("postTRUE" = "Post 2014","expand_everTRUE"="Expand",
                            "treat" = "Post x Expand"),
              gof_omit='DF|F|Lik|AIC|BIC|Adj')
-```
-
-
-\newpage 
-
-
-# 7. Include state and year fixed effects in your estimates. Try using the lfe or fixest package to estimate this instead of directly including the fixed effects. 
-
-
-```{r} 
-#| echo: false
-#| label: tab-dd-fe
-#| tbl-cap: "DD Estimates for Medicaid Expansion with TWFE"
-fe.est <- feols(perc_unins ~ treat | State + year, data = reg.data, 
-                notes = FALSE, fixef.rm = "none")
-
-models <- list(
-  "Standard DD" = dd.est,
-  "TWFE" = fe.est
-)
-
-modelsummary(models,
-             coef_rename=c("postTRUE" = "Post 2014","expand_everTRUE"="Expand",
-                           "treat" = "Post x Expand"),
-             gof_omit='DF|F|Lik|AIC|BIC|Adj')
-```
-
-
-\newpage 
-
-
-# 8. Repeat the analysis in question 7 but include all states (even those that expanded after 2014). Are your results different? If so, why? 
-
-
-```{r} 
-#| echo: false
-#| label: tab-dd-fe-all
-#| results: asis
-reg.data2 <- reg.data2 %>%
-  mutate(
-    treat = case_when(
-      year >= expand_year & !is.na(expand_year) ~ 1,
-      is.na(expand_year) ~ 0,
-      year < expand_year & !is.na(expand_year) ~ 0
-    )
-  )
-
-fe.est2 <- feols(perc_unins ~ treat | State + year, data = reg.data2)
-
-models <- list("Standard DD" = dd.est, 
-               "TWFE" = fe.est,
-               "Time-varying Treatment" = fe.est2)
-
-modelsummary(models,
-             coef_rename=c("postTRUE" = "Post 2014","expand_everTRUE"="Expand",
-                           "treat" = "Post x Expand"),
-             gof_omit='DF|F|Lik|AIC|BIC|Adj')
-```
-
-
-\newpage 
-
-
-# 9. Provide an “event study” graph showing the effects of Medicaid expansion in each year. Use the specification that includes state and year fixed effects, limited to states that expanded in 2014 or never expanded. 
-
-
-```{r} 
-#| echo: false
-#| label: fig-event-study-14
-#| fig-cap: "Event Study with Common Treatment Time"
-
-iplot(mod.twfe, 
-      xlab = 'Time to treatment',
-      main = '')
-```
-
-
-\newpage 
-
-
-# 10.Repeat part 9 but again include states that expanded after 2014. Note: this is tricky…you need to put all states onto “event time” to create this graph. 
-
-
-```{r} 
-#| echo: false
-#| label: fig-event-study-all
-#| fig-cap: "Event Study with Staggered Treatment"
-
-iplot(mod.twfe2, 
-      xlab = 'Time to treatment',
-      main = '')
 ```

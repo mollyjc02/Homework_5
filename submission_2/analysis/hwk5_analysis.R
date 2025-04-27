@@ -1,7 +1,16 @@
-# preliminaries 
-if (!require("pacman")) install.packages("pacman")
-pacman::p_load(tidyverse, ggplot2, dplyr, lubridate, readr, readxl, scales, acs, tidyr)
 options(modelsummary_factory_default = "kableExtra")
+
+# preliminaries
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(
+  tidyverse, ggplot2, dplyr, lubridate, readr, readxl,
+  hrbrthemes, fixest, scales, gganimate, gapminder,
+  gifski, png, tufte, plotly, OECD, ggrepel,
+  survey, foreign, devtools, pdftools,
+  modelsummary, kableExtra, data.table, gdata
+)
+
+
 
 # import the data 
 final.data <- read_tsv("data/output/acs_medicaid.txt")
@@ -79,7 +88,7 @@ uninsured.share <- final.data.exp %>%
 
 ### plot
 uninsured.plot <- ggplot(uninsured.share, aes(x = year, y = share_uninsured, color = expand_group)) +
-  geom_line(size = 1.2) +
+  geom_line(linewidth = 1.2) +
   geom_point() +
   scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
   labs(
@@ -97,21 +106,37 @@ print(uninsured.plot)
 ###### For the rest of the assignment, we’re going to apply the difference-in-differences estimator to the question of Medicaid expansion and uninsurance.
 
 # 5. Calculate the average percent of uninsured individuals in 2012 and 2015, separately for expansion and non-expansion states. Present your results in a basic 2x2 DD table.
-dd.table <- final.data %>% 
-  filter(is.na(expand_year) | expand_year==2014) %>%
-  filter(year %in% c(2012, 2015)) %>%  
-  group_by(expand_ever, year) %>%
-  summarize(uninsured=mean(perc_unins))
-
-dd.table <- pivot_wider(dd.table, names_from="year", names_prefix="year", values_from="uninsured") %>% 
-  ungroup() %>%
-  mutate(expand_ever=case_when(
-    expand_ever==FALSE ~ 'Non-expansion',
-    expand_ever==TRUE ~ 'Expansion')
+expansion.status <- final.data.exp %>%
+  group_by(State) %>%
+  summarize(first_expand_year = unique(year(date_adopted))) %>%
+  mutate(
+    group = case_when(
+      first_expand_year == 2014 ~ "Expansion",
+      is.na(first_expand_year) ~ "Non-Expansion",
+      TRUE ~ NA_character_  # drop late expanders
+    )
   ) %>%
-  rename(Group=expand_ever,
-         Pre=year2012,
-         Post=year2015)
+  filter(!is.na(group))
+
+### merge with final data
+dd.data <- final.data.exp %>%
+  filter(year %in% c(2012, 2015)) %>%
+  inner_join(expansion.status, by = "State")
+
+### compute mean uninsured share by year & group
+dd.table <- dd.data %>%
+  group_by(group, year) %>%
+  summarize(
+    avg_uninsured = sum(uninsured, na.rm = TRUE) / sum(adult_pop, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  pivot_wider(names_from = year, values_from = avg_uninsured)
+
+### add DID manually 
+dd.table <- dd.table %>%
+  mutate(
+    diff = `2015` - `2012`
+  )
 
 print(dd.table)
 
@@ -204,7 +229,6 @@ mod.twfe2 <- feols(
 
 ### extract and plot 
 iplot(mod.twfe2, xlab = "Event Time (Years Since Expansion)", main = "Event Study: Medicaid Expansion (All States, Event Time)", ref.line = TRUE)
-
 
 
 
