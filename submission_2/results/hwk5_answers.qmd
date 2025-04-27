@@ -17,10 +17,11 @@ format:
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(tidyverse, ggplot2, dplyr, lubridate, readr, readxl, hrbrthemes, fixest,
                scales, gganimate, gapminder, gifski, png, tufte, plotly, OECD,
-               ggrepel, survey, foreign, devtools, pdftools, kableExtra, modelsummary,
-               kableExtra) 
+               ggrepel, survey, foreign, devtools, pdftools, kableExtra, modelsummary)
+
 library(patchwork)
 library(gridExtra)
+options(modelsummary_factory_default = "kableExtra")
 ```
 
 Here is a link to my repository: {https://github.com/mollyjc02/Homework_5.git}
@@ -44,8 +45,9 @@ load(here("submission_2", "results", "hwk5_workspace.RData"))
 ```{r} 
 #| echo: false
 #| label: fig-dir-share
+#| fig-cap: "Share of Individuals with Direct Purchase" 
 
-print(direct.share.plt)
+direct.share.plt
 ```
 
 
@@ -65,8 +67,9 @@ answer here
 ```{r} 
 #| echo: false
 #| label: fig-med-share
+#| fig-cap: "Share of Individuals with Medicaid"
 
-print(medicaid.share.plt)
+medicaid.share.plt
 ```
 
 
@@ -78,9 +81,10 @@ print(medicaid.share.plt)
 
 ```{r} 
 #| echo: false
-#| label: fig-unisured
+#| label: fig-unisured 
+#| fig-cap: "Average Uninsured by Medicaid Expansion"
 
-print(uninsured.plot)
+uninsured.plot 
 ```
 
 
@@ -93,9 +97,16 @@ print(uninsured.plot)
 ```{r} 
 #| echo: false
 #| label: tab-dd
-#| results: asis
+#| tbl-cap: "DD Table for Medicaid Expansion"
 
-knitr::kable(dd.table, digits = 3, caption = "Difference-in-Differences Table of Uninsured Rates")
+knitr::kable(dd.table, 
+             col.names=c("Group", "Pre", "Post"),
+             digits=2,
+             booktabs = TRUE,
+             escape=F,
+             align="l",
+             format='latex') %>% 
+  kable_styling(full_width=F)
 ```
 
 
@@ -108,16 +119,12 @@ knitr::kable(dd.table, digits = 3, caption = "Difference-in-Differences Table of
 ```{r} 
 #| echo: false
 #| label: tab-dd-reg
-#| results: asis
+#| tbl-cap: "DD Estimates for Medicaid Expansion"
 
-library(broom)
-
-tidy(dd.model, conf.int = TRUE) %>%
-  mutate(across(c(estimate, std.error, conf.low, conf.high), ~ round(., 4))) %>%
-  knitr::kable(
-    caption = "Difference-in-Differences Regression: Effect of Medicaid Expansion on Uninsurance Rate",
-    col.names = c("Term", "Estimate", "Std. Error", "t value", "p value", "95% CI (Low)", "95% CI (High)")
-  )
+modelsummary(dd.est,
+             coef_rename=c("postTRUE" = "Post 2014","expand_everTRUE"="Expand",
+                           "treat" = "Post x Expand"),
+             gof_omit='DF|F|Lik|AIC|BIC|Adj')
 ```
 
 
@@ -130,14 +137,17 @@ tidy(dd.model, conf.int = TRUE) %>%
 ```{r} 
 #| echo: false
 #| label: tab-dd-fe
-#| results: asis
+#| tbl-cap: "DD Estimates for Medicaid Expansion with TWFE"
 
-knitr::kable(
-  fe.model.tidy %>%
-    mutate(across(c(estimate, std.error, conf.low, conf.high), ~ round(., 4))),
-  caption = "Two-Way Fixed Effects DiD Regression Results",
-  col.names = c("Term", "Estimate", "Std. Error", "t value", "p value", "95% CI (Low)", "95% CI (High)")
+models <- list(
+  "Standard DD" = dd.est,
+  "TWFE" = fe.est
 )
+
+modelsummary(models,
+             coef_rename=c("postTRUE" = "Post 2014","expand_everTRUE"="Expand",
+                           "treat" = "Post x Expand"),
+             gof_omit='DF|F|Lik|AIC|BIC|Adj')
 ```
 
 
@@ -152,12 +162,14 @@ knitr::kable(
 #| label: tab-dd-fe-all
 #| results: asis
 
-knitr::kable(
-  fe.model.all.tidy %>%
-    mutate(across(c(estimate, std.error, conf.low, conf.high), \(x) round(x, 4))),
-  caption = "DiD Regression with State and Year Fixed Effects (All States Included)",
-  col.names = c("Term", "Estimate", "Std. Error", "t value", "p value", "95% CI (Low)", "95% CI (High)")
-)
+models <- list("Standard DD" = dd.est, 
+               "TWFE" = fe.est,
+               "Time-varying Treatment" = fe.est2)
+
+modelsummary(models,
+             coef_rename=c("postTRUE" = "Post 2014","expand_everTRUE"="Expand",
+                           "treat" = "Post x Expand"),
+             gof_omit='DF|F|Lik|AIC|BIC|Adj')
 ```
 
 
@@ -170,12 +182,11 @@ knitr::kable(
 ```{r} 
 #| echo: false
 #| label: fig-event-study-14
-#| fig-cap: "Event Study: Effect of Medicaid Expansion on Uninsurance Rate (2014 Expanders vs. Non-Expanders)"
+#| fig-cap: "Event Study with Common Treatment Time"
 
-
-iplot(event.model,
-      xlab = "Year",
-      main = "Event Study: Effect of Medicaid Expansion (2014 only)")
+iplot(mod.twfe, 
+      xlab = 'Time to treatment',
+      main = '')
 ```
 
 
@@ -188,12 +199,9 @@ iplot(event.model,
 ```{r} 
 #| echo: false
 #| label: fig-event-study-all
-#| fig-cap: "Event Study: Effect of Medicaid Expansion on Uninsurance Rate (All Expanders vs. Non-Expanders)"
+#| fig-cap: "Event Study with Staggered Treatment"
 
-iplot(
-  event.model.all,
-  xlab = "Event Time (Years Since Expansion)",
-  main = "Event Study: Medicaid Expansion (All States with Event Time)",
-  ref.line = TRUE
-)
+iplot(mod.twfe2, 
+      xlab = 'Time to treatment',
+      main = '')
 ```
