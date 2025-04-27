@@ -1,6 +1,7 @@
 # preliminaries 
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(tidyverse, ggplot2, dplyr, lubridate, readr, readxl, scales, acs, tidyr)
+options(modelsummary_factory_default = "kableExtra")
 
 # import the data 
 final.data <- read_tsv("data/output/acs_medicaid.txt")
@@ -90,7 +91,6 @@ uninsured.plot <- ggplot(uninsured.share, aes(x = year, y = share_uninsured, col
   theme_minimal()
 
 print(uninsured.plot)
-
 
 
 
@@ -209,5 +209,5 @@ iplot(mod.twfe2, xlab = "Event Time (Years Since Expansion)", main = "Event Stud
 
 
 
-rm(list = setdiff(ls(), c("direct.share.plt", "medicaid.share.plt", "uninsured.plot", "dd.table", "dd.est", "fe.est", "models", "fe.est2", "models2", "mod.twfe", "mod.twfe2", "reg.data", "reg.data2")))
+rm(list=c("final.data","uninsured.share"))
 save.image("submission_2/results/hwk5_workspace.RData") 

@@ -120,6 +120,7 @@ knitr::kable(dd.table,
 #| echo: false
 #| label: tab-dd-reg
 #| tbl-cap: "DD Estimates for Medicaid Expansion"
+dd.est <- lm(perc_unins ~ post + expand_ever + treat, data = reg.data)
 
 modelsummary(dd.est,
              coef_rename=c("postTRUE" = "Post 2014","expand_everTRUE"="Expand",
@@ -138,6 +139,8 @@ modelsummary(dd.est,
 #| echo: false
 #| label: tab-dd-fe
 #| tbl-cap: "DD Estimates for Medicaid Expansion with TWFE"
+fe.est <- feols(perc_unins ~ treat | State + year, data = reg.data, 
+                notes = FALSE, fixef.rm = "none")
 
 models <- list(
   "Standard DD" = dd.est,
@@ -161,6 +164,16 @@ modelsummary(models,
 #| echo: false
 #| label: tab-dd-fe-all
 #| results: asis
+reg.data2 <- reg.data2 %>%
+  mutate(
+    treat = case_when(
+      year >= expand_year & !is.na(expand_year) ~ 1,
+      is.na(expand_year) ~ 0,
+      year < expand_year & !is.na(expand_year) ~ 0
+    )
+  )
+
+fe.est2 <- feols(perc_unins ~ treat | State + year, data = reg.data2)
 
 models <- list("Standard DD" = dd.est, 
                "TWFE" = fe.est,
