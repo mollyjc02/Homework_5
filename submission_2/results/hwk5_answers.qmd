@@ -39,7 +39,6 @@ load(here("submission_2", "results", "hwk5_workspace.RData"))
 
 
 ## 1. Plot the share of the adult population with direct purchase health insurance over time. 
- 
 
 ```{r} 
 #| echo: false
@@ -54,14 +53,15 @@ direct.share.plt
 
 
 ## 2. Discuss the reduction in direct purchase health insurance in later years. Can you list a couple of policies that might have affected the success of the direct purchase insurance market? 
-answer here 
+ The decline in direct purchase health insurance in later years (2017-18) is likely largely attributable to federal efforts to weaken the Affordable Care Act (ACA). Two major policy actions that could have contributed to this trend include: 1) the federal government reducing funding for marketing efforts that helped consumers sign up for coverage, and 2) the administration announced it would no longer enforce penalties for failing to comply with the individual mandate. These changes reduced both the visibility and the incentives for individuals to maintain direct purchase insurance, leading to lower enrollment rates.
+
+
 
 
 \newpage 
 
 
 # 3. Plot the share of the adult population with Medicaid over time. 
-
 
 ```{r} 
 #| echo: false
@@ -77,7 +77,6 @@ medicaid.share.plt
 
 # 4. Plot the share of uninsured over time, separately by states that expanded Medicaid in 2014 versus those that did not. Drop all states that expanded after 2014. 
 
-
 ```{r} 
 #| echo: false
 #| label: fig-unisured 
@@ -91,7 +90,6 @@ uninsured.plot
 
 
 # 5. Calculate the average percent of uninsured individuals in 2012 and 2015, separately for expansion and non-expansion states. Present your results in a basic 2x2 DD table. 
-
 
 ```{r} 
 #| echo: false
@@ -107,14 +105,88 @@ knitr::kable(dd.table, digits = 3, caption = "Difference-in-Differences Table of
 
 # 6. Estimate the effect of Medicaid expansion on the uninsurance rate using a standard DD regression estimator, again focusing only on states that expanded in 2014 versus those that never expanded.
 
-
 ```{r}
 #| echo: false
 #| label: tab-dd-reg
 #| tbl-cap: "DD Estimates for Medicaid Expansion"
 
-modelsummary(dd.est,
+modelsummary(dd.est, output = "kableExtra", 
+             coef_rename=c("postTRUE" = "Post 2014", "expand_everTRUE" = "Expand", "treat" = "Post x Expand"),
+             gof_omit = 'DF|F|Lik|AIC|BIC|Adj')
+```
+
+
+\newpage
+
+
+# 7. Include state and year fixed effects in your estimates. Try using the lfe or fixest package to estimate this instead of directly including the fixed effects.
+
+```{r}
+#| echo: false
+#| label: tab-dd-fe
+#| tbl-cap: "DD Estimates for Medicaid Expansion with TWFE"
+
+models <- list(
+  "Standard DD" = dd.est,
+  "TWFE" = fe.est)
+
+modelsummary(models, output = "kableExtra", 
              coef_rename=c("postTRUE" = "Post 2014","expand_everTRUE"="Expand",
                            "treat" = "Post x Expand"),
              gof_omit='DF|F|Lik|AIC|BIC|Adj')
 ```
+
+
+\newpage
+
+
+# 8. Repeat the analysis in question 7 but include all states (even those that expanded after 2014). Are your results different? If so, why?
+
+```{r}
+#| echo: false
+#| label: tab-dd-fe-all
+#| results: asis
+
+models <- list("Standard DD" = dd.est,
+               "TWFE" = fe.est,
+               "Time-varying Treatment" = fe.est2)
+
+modelsummary(models, output = "kableExtra", 
+             coef_rename=c("postTRUE" = "Post 2014","expand_everTRUE"="Expand",
+                           "treat" = "Post x Expand"),
+             gof_omit='DF|F|Lik|AIC|BIC|Adj')
+```
+
+
+\newpage
+
+
+# 9. Provide an “event study” graph showing the effects of Medicaid expansion in each year. Use the specification that includes state and year fixed effects, limited to states that expanded in 2014 or never expanded.
+
+```{r}
+#| echo: false
+#| label: fig-event-study-14
+#| fig-cap: "Event Study with Common Treatment Time"
+
+iplot(mod.twfe,
+      xlab = 'Time to treatment',
+      main = '')
+```
+
+
+\newpage
+
+
+# 10.Repeat part 9 but again include states that expanded after 2014. Note: this is tricky…you need to put all states onto “event time” to create this graph.
+
+```{r}
+#| echo: false
+#| label: fig-event-study-all
+#| fig-cap: "Event Study with Staggered Treatment"
+
+
+iplot(mod.twfe2,
+      xlab = 'Time to treatment',
+      main = '')
+```
+
