@@ -1,0 +1,224 @@
+---
+title: "Homework 5"
+subtitle: "ECON 470, Spring 2025"
+author: "Molly Catlin"
+format:
+  pdf:
+    output-file: "catlin_molly_hwk5_fs"
+    output-ext:  "pdf"
+    header-includes:
+      - \usepackage{float}
+      - \floatplacement{table}{H}
+    df-print: kable
+---
+
+```{r}
+#| include: false
+
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(tidyverse, ggplot2, dplyr, lubridate, stringr, readxl, 
+               data.table, gdata, scales, kableExtra, modelsummary, fixest)
+```
+
+Here is a link to my repository: {https://github.com/mollyjc02/Homework_5.git}
+
+
+\newpage 
+
+
+```{r}
+#| include: false
+#| eval: true
+
+library(here)
+load(here("submission_final", "results", "hwk5_workspace.RData"))
+```
+
+
+\newpage 
+
+
+## 1. Plot the share of the adult population with direct purchase health insurance over time. 
+
+@fig-dir-share presents the fraction of individuals with direct purchase of health insurance in any given year, averaged across states.
+
+```{r} 
+#| echo: false
+#| label: fig-dir-share
+#| fig-cap: "Share of Individuals with Direct Purchase" 
+
+direct.share.plt
+```
+
+This figure demonstrates both a steady incline in direct purchase following the implementation of the ACA, and a steady decline after 2016, which aligns with federal efforts to weaken the ACA. This suggests that policy rollbacks reduced both enrollment and visibility of direct-purchase options.
+
+
+\newpage 
+
+
+## 2. Discuss the reduction in direct purchase health insurance in later years. Can you list a couple of policies that might have affected the success of the direct purchase insurance market? 
+
+ The decline in direct purchase health insurance in later years (2017-18) is likely largely attributable to federal efforts to weaken the Affordable Care Act (ACA). Two major policy actions that could have contributed to this trend include: 1) the federal government reducing funding for marketing efforts that helped consumers sign up for coverage, and 2) the administration announced it would no longer enforce penalties for failing to comply with the individual mandate. These changes reduced both the visibility and the incentives for individuals to maintain direct purchase insurance, leading to lower enrollment rates.
+
+
+\newpage 
+
+
+# 3. Plot the share of the adult population with Medicaid over time. 
+
+@fig-med-share presents the fraction of individuals with Medicaid in any given year, averaged across states.
+
+```{r} 
+#| echo: false
+#| label: fig-med-share
+#| fig-cap: "Share of Individuals with Medicaid"
+
+medicaid.share.plt
+```
+
+This figure shows a clear increase in Medicaid coverage following 2014, consistent with the implementation of Medicaid expansion. This demonstrates that expansion effectively increased coverage among individuals eligible for Medicaid.
+
+
+\newpage 
+
+
+# 4. Plot the share of uninsured over time, separately by states that expanded Medicaid in 2014 versus those that did not. Drop all states that expanded after 2014. 
+
+@fig-unisured presents the average rate of uninsurance in any given year, averaged across states. This figure clearly shows a change in uninsurance rates before and after 2014 for both expansion and non-expansion states. Both trends show a similar drop around that year, but the drop was more pronounced in states that expanded Medicaid. This supports the idea that expansion directly contributed to increased insurance coverage.
+
+
+```{r} 
+#| echo: false
+#| label: fig-unisured 
+#| fig-cap: "Average Uninsured by Medicaid Expansion"
+
+uninsured.plot 
+```
+
+
+\newpage 
+
+
+# 5. Calculate the average percent of uninsured individuals in 2012 and 2015, separately for expansion and non-expansion states. Present your results in a basic 2x2 DD table. 
+
+@tbl-dd is a "standard" 2x2 DD table showing average percent of uninsured individuals in 2012 (pre) and 2015 (post) for treatment (expansion) and control (non-expansion) states. From these averages, our DD estimate for the effect of Medicaid expansion on uninsurance would be `r format(dd.table$Post[dd.table$group == "Expansion"] - dd.table$Pre[dd.table$group == "Expansion"] - (dd.table$Post[dd.table$group == "Non-Expansion"] - dd.table$Pre[dd.table$group == "Non-Expansion"]), digits = 3)`. 
+
+```{r} 
+#| echo: false
+#| label: tbl-dd
+#| tbl-cap: "DD Table for Medicaid Expansion"
+
+knitr::kable(dd.table, digits = 3, caption = "Difference-in-Differences Table of Uninsured Rates")
+```
+
+
+
+\newpage
+
+
+# 6. Estimate the effect of Medicaid expansion on the uninsurance rate using a standard DD regression estimator, again focusing only on states that expanded in 2014 versus those that never expanded.
+
+@tbl-dd-reg summarizes the effect of Medicaid expansion on the uninsurance rate in states that expanded in 2014 versus those that never expanded. Results show that Medicaid expansion is associated with a statistically significant reduction in uninsurance in expansion states relative to non-expansion states.
+
+```{r}
+#| echo: false
+#| label: tbl-dd-reg
+#| tbl-cap: "DD Estimates for Medicaid Expansion"
+
+modelsummary(dd.est, output = "kableExtra", 
+             coef_rename = c(
+               "post" = "Post 2014",
+               "expand_ever" = "Expand",
+               "treat" = "Post x Expand"),
+             gof_omit = 'DF|F|Lik|AIC|BIC|Adj',
+             column_labels = "")
+```
+
+
+\newpage
+
+
+# 7. Include state and year fixed effects in your estimates. Try using the lfe or fixest package to estimate this instead of directly including the fixed effects.
+
+@tbl-dd-fe summarizes the results with state and year fixed effects alongside the results from a standard DD estimator. As we can see, the estimates collected with and without the inclusion of fixed effects are nearly identical. 
+
+```{r}
+#| echo: false
+#| label: tbl-dd-fe
+#| tbl-cap: "DD Estimates for Medicaid Expansion with TWFE"
+
+models <- list(
+  "Standard DD" = dd.est,
+  "TWFE" = fe.est)
+
+modelsummary(models, output = "kableExtra", 
+             coef_rename = c(
+               "post" = "Post 2014",
+               "expand_ever" = "Expand",
+               "treat" = "Post x Expand"), 
+             gof_omit='DF|F|Lik|AIC|BIC|Adj')
+```
+
+
+\newpage
+
+
+# 8. Repeat the analysis in question 7 but include all states (even those that expanded after 2014). Are your results different? If so, why?
+
+In this specification, we include both state and year fixed effects, but the treatment interaction term varies based on each state's expansion year. Specifically, the interaction equals 1 in all years following a state's expansion (including the year of expansion), and 0 otherwise. For states that never expanded Medicaid, the interaction term remains 0 for all years. The regression results are presented in @tbl-dd-fe-all. Results suggest that the original DD estimate is robust to the inclusion of fixed effects. 
+
+```{r}
+#| echo: false
+#| label: tbl-dd-fe-all
+#| results: asis
+
+models <- list("Standard DD" = dd.est,
+               "TWFE" = fe.est,
+               "Time-varying Treatment" = fe.est2)
+
+modelsummary(models, output = "kableExtra", 
+             coef_rename = c(
+               "post" = "Post 2014",
+               "expand_ever" = "Expand",
+               "treat" = "Post x Expand"),
+             gof_omit='DF|F|Lik|AIC|BIC|Adj')
+```
+
+
+\newpage
+
+
+# 9. Provide an “event study” graph showing the effects of Medicaid expansion in each year. Use the specification that includes state and year fixed effects, limited to states that expanded in 2014 or never expanded.
+
+@fig-event-study-14 presents event study estimates for states that expanded in 2014 or never expanded. The downward shift in estimates after 2014 indicates a clear causal impact of expansion on reducing uninsurance. 
+
+```{r}
+#| echo: false
+#| label: fig-event-study-14
+#| fig-cap: "Event Study with Common Treatment Time"
+
+iplot(mod.twfe,
+      xlab = 'Time to treatment',
+      main = '')
+```
+
+
+\newpage
+
+
+# 10.Repeat part 9 but again include states that expanded after 2014. Note: this is tricky…you need to put all states onto “event time” to create this graph.
+
+@fig-event-study-all presents event study estimates for states that expanded in or after 2014 compared to those that never expanded. The drop in estimates post-treatment, particularly in year 1 and beyond, confirms that Medicaid expansion had a sustained effect in reducing the uninsured population.
+
+
+```{r}
+#| echo: false
+#| label: fig-event-study-all
+#| fig-cap: "Event Study with Staggered Treatment"
+
+
+iplot(mod.twfe2,
+      xlab = 'Time to treatment',
+      main = '')
+```
+

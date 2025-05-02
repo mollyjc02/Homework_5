@@ -1,5 +1,3 @@
-options(modelsummary_factory_default = "kableExtra")
-
 # preliminaries
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(
@@ -33,11 +31,14 @@ direct.share.plt <- final.data %>% group_by(year) %>% summarize(mean=mean(perc_d
   ggplot(aes(x = year, y = mean)) +
   geom_line(linewidth = 1.2, color = "steelblue") +
   geom_point(color = "steelblue") +
+  geom_vline(xintercept = 2013.5, color = "red", linetype = "solid", linewidth = 1) + 
   labs(
     x = "Year",
     y = "Share with Direct Purchase Insurance"
   ) +
-  theme_minimal()
+  theme_minimal() +
+  theme(
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 1))
 
 print(direct.share.plt)
 
@@ -46,14 +47,17 @@ print(direct.share.plt)
 # 3. Plot the share of the adult population with Medicaid over time.
 medicaid.share.plt <- final.data %>% group_by(year) %>% summarize(mean=mean(perc_medicaid)) %>% 
   ggplot(aes(x = year, y = mean)) +
-  geom_line(linewidth = 1.2, color = "darkgreen") +
-  geom_point(color = "darkgreen") +
+  geom_line(linewidth = 1.2, color = "steelblue") +
+  geom_point(color = "steelblue") + 
+  geom_vline(xintercept = 2013.5, color = "red", linetype = "solid", linewidth = 1) + 
   scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
   labs(
     x = "Year",
     y = "Share with Medicaid"
   ) +
-  theme_minimal()
+  theme_minimal() +
+  theme(
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 1))
 
 print(medicaid.share.plt)
 
@@ -87,19 +91,33 @@ uninsured.share <- final.data.exp %>%
   )
 
 ### plot
-uninsured.plot <- ggplot(uninsured.share, aes(x = year, y = share_uninsured, color = expand_group)) +
-  geom_line(linewidth = 1.2) +
-  geom_point() +
+uninsured.plot <- ggplot(uninsured.share, aes(x = year, y = share_uninsured, linetype  = expand_group)) +
+  geom_line(color = "black", linewidth = 1.2) +
+  geom_point(color = "black",) +
+  scale_linetype_manual(
+    values = c("Expanded in 2014" = "dashed", "Never Expanded" = "solid")) + 
   scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
   labs(
-    title = "Uninsured Rate by Medicaid Expansion Status (2012–2019)",
     x = "Year",
     y = "Share Uninsured",
     color = "Expansion Status"
   ) +
-  theme_minimal()
+  theme_minimal() + 
+  theme(
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 1)) + 
+  theme(legend.position = "none") + 
+  geom_text(
+    data = uninsured.share %>% 
+      filter(year == 2018) %>%
+      mutate(label = ifelse(expand_group == "Expanded in 2014", "Expanded", "Non-expansion"),
+             vjust = ifelse(expand_group == "Expanded in 2014", -1.5, -0.5)),
+    aes(label = label, vjust = vjust),
+    hjust = 1,
+    color = "black",
+    size = 4
+  ) 
 
-print(uninsured.plot)
+print(uninsured.plot) 
 
 
 
@@ -113,7 +131,7 @@ expansion.status <- final.data.exp %>%
     group = case_when(
       first_expand_year == 2014 ~ "Expansion",
       is.na(first_expand_year) ~ "Non-Expansion",
-      TRUE ~ NA_character_  # drop late expanders
+      TRUE ~ NA_character_  
     )
   ) %>%
   filter(!is.na(group))
@@ -130,12 +148,19 @@ dd.table <- dd.data %>%
     avg_uninsured = sum(uninsured, na.rm = TRUE) / sum(adult_pop, na.rm = TRUE),
     .groups = "drop"
   ) %>%
-  pivot_wider(names_from = year, values_from = avg_uninsured)
+  pivot_wider(names_from = year, values_from = avg_uninsured) %>% 
+  rename(
+    Pre = `2012`,
+    Post = `2015`
+  ) %>%
+  mutate(
+    diff = Post - Pre
+  )
 
 ### add DID manually 
 dd.table <- dd.table %>%
   mutate(
-    diff = `2015` - `2012`
+    diff = `Pre` - `Post`
   )
 
 print(dd.table)
@@ -158,12 +183,6 @@ reg.data <- final.data %>%
 ### DID regression
 dd.est <- lm(perc_unins ~ post + expand_ever + treat, data = reg.data)
 summary(dd.est)
-
-### plot 
-dd.est.model <- modelsummary(dd.est,
-             coef_rename=c("postTRUE" = "Post 2014","expand_everTRUE"="Expand",
-                           "treat" = "Post x Expand"),
-             gof_omit='DF|F|Lik|AIC|BIC|Adj')
 
 
 
@@ -239,5 +258,6 @@ iplot(mod.twfe2, xlab = "Event Time (Years Since Expansion)", main = "Event Stud
 
 
 
+
 rm(list=c("final.data","uninsured.share"))
-save.image("submission_2/results/hwk5_workspace.RData") 
+save.image("submission_final/results/hwk5_workspace.RData") 
